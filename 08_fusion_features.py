@@ -89,30 +89,27 @@ def fusionar_features(lbp, tfidf):
     """
     Concatena features visuales + textuales en un solo vector.
     Referencia: Idea 6 — np.hstack([features_lbp, features_tfidf])
+    Optimización: Mantiene la representación sparse para entrenamiento ultra-rápido.
     """
     from scipy import sparse
+    from sklearn.preprocessing import MinMaxScaler
     
     # Normalizar features visuales (escalar a [0,1])
-    from sklearn.preprocessing import MinMaxScaler
     scaler_vis = MinMaxScaler()
     lbp_norm = scaler_vis.fit_transform(lbp)
     
-    # Convertir TF-IDF sparse a dense si es necesario
-    if sparse.issparse(tfidf):
-        tfidf_dense = tfidf.toarray()
+    # Asegurar que TF-IDF sea sparse
+    if not sparse.issparse(tfidf):
+        tfidf_sparse = sparse.csr_matrix(tfidf)
     else:
-        tfidf_dense = tfidf
+        tfidf_sparse = tfidf
     
-    # Normalizar features textuales
-    scaler_txt = MinMaxScaler()
-    tfidf_norm = scaler_txt.fit_transform(tfidf_dense)
+    # Concatenar de forma rala (sparse hstack)
+    features_fusionadas = sparse.hstack([sparse.csr_matrix(lbp_norm), tfidf_sparse], format="csr")
     
-    # Concatenar: [features_lbp | features_tfidf]
-    features_fusionadas = np.hstack([lbp_norm, tfidf_norm])
-    
-    print(f"\n  Features LBP normalizadas: {lbp_norm.shape}")
-    print(f"  Features TF-IDF normalizadas: {tfidf_norm.shape}")
-    print(f"  Features fusionadas: {features_fusionadas.shape}")
+    print(f"\n  Features LBP normalizadas (dense): {lbp_norm.shape}")
+    print(f"  Features TF-IDF (sparse): {tfidf_sparse.shape}")
+    print(f"  Features fusionadas (sparse): {features_fusionadas.shape}")
     
     return features_fusionadas
 
@@ -123,9 +120,9 @@ def entrenar_y_evaluar(features, labels, output_dir):
     Referencia: Idea 6 — Modelo 4: svm_fusion = SVC(kernel='rbf')
     """
     from sklearn.model_selection import train_test_split
-    from sklearn.svm import SVC
+    from sklearn.svm import LinearSVC
     from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-    from sklearn.preprocessing import StandardScaler
+    from sklearn.preprocessing import MaxAbsScaler
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -145,19 +142,23 @@ def entrenar_y_evaluar(features, labels, output_dir):
     print(f"\n  Train: {X_train.shape[0]} muestras")
     print(f"  Test:  {X_test.shape[0]} muestras")
     
-    # Escalar features
-    scaler = StandardScaler()
+    # Escalar features preservando dispersión
+    scaler = MaxAbsScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
     
     # ── Modelo: Fusión (LBP + TF-IDF) + SVM ──
     print("\n  Entrenando SVM con features fusionadas...")
-    svm_fusion = SVC(kernel='rbf', C=10, gamma='scale', random_state=42)
+    svm_fusion = LinearSVC(C=1.0, dual=False, random_state=42)
     svm_fusion.fit(X_train_scaled, y_train)
     y_pred = svm_fusion.predict(X_test_scaled)
     
+    # Filtrar solo clases presentes en los datos de prueba
+    clases_presentes = sorted(set(y_test))
+    nombres_presentes = [CLASSES[i] for i in clases_presentes]
+    
     accuracy = accuracy_score(y_test, y_pred)
-    report = classification_report(y_test, y_pred, target_names=CLASSES, zero_division=0)
+    report = classification_report(y_test, y_pred, target_names=nombres_presentes, zero_division=0)
     cm = confusion_matrix(y_test, y_pred)
     
     print(f"\n  Accuracy Fusión (LBP+TF-IDF) + SVM: {accuracy:.4f}")
@@ -169,7 +170,7 @@ def entrenar_y_evaluar(features, labels, output_dir):
         f.write("=" * 70 + "\n")
         f.write("  RESULTADOS — FUSIÓN DE FEATURES (LBP + TF-IDF) + SVM\n")
         f.write("=" * 70 + "\n\n")
-        f.write(f"Modelo: SVC(kernel='rbf', C=10, gamma='scale')\n")
+        f.write(f"Modelo: LinearSVC(C=1.0, dual=False)\n")
         f.write(f"Features: LBP ({features.shape[1]} dims) = visual + textual\n")
         f.write(f"Train: {X_train.shape[0]} muestras | Test: {X_test.shape[0]} muestras\n")
         f.write(f"Accuracy: {accuracy:.4f}\n\n")
@@ -183,7 +184,7 @@ def entrenar_y_evaluar(features, labels, output_dir):
     # Matriz de confusión
     fig, ax = plt.subplots(figsize=(14, 12))
     sns.heatmap(cm, annot=True, fmt='d', cmap='YlOrRd',
-                xticklabels=CLASSES, yticklabels=CLASSES, ax=ax)
+                xticklabels=nombres_presentes, yticklabels=nombres_presentes, ax=ax)
     ax.set_title(f"Matriz de Confusión — Fusión (LBP+TF-IDF) + SVM\nAccuracy: {accuracy:.4f}",
                  fontsize=14, fontweight='bold')
     ax.set_xlabel("Predicción", fontsize=12)
@@ -242,7 +243,7 @@ def main():
     accuracy, report = entrenar_y_evaluar(features_fusionadas, labels, args.output_dir)
     
     print("\n" + "=" * 70)
-    print(f"  ✓ Fusión completada — Accuracy: {accuracy:.4f}")
+    print(f"  [OK] Fusión completada — Accuracy: {accuracy:.4f}")
     print("=" * 70)
 
 

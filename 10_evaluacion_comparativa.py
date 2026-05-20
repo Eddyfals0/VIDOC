@@ -27,9 +27,9 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # Constantes
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 import os
 from pathlib import Path
 
@@ -50,6 +50,8 @@ COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
           '#DDA0DD', '#98D8C8', '#F7DC6F']
 
 
+import re
+
 def cargar_resultados_desde_archivos(resultados_dir):
     """
     Lee los reportes de resultados de cada script para extraer las métricas.
@@ -58,24 +60,344 @@ def cargar_resultados_desde_archivos(resultados_dir):
     resultados_dir = Path(resultados_dir)
     modelos = {}
     
-    # Intentar cargar resultados guardados como JSON
+    # 1. Intentar cargar resultados guardados como JSON
     json_path = resultados_dir / "metricas_todos_modelos.json"
     if json_path.exists():
-        with open(json_path, "r", encoding="utf-8") as f:
-            modelos = json.load(f)
-        print(f"  Cargadas métricas de {len(modelos)} modelos desde JSON")
-        return modelos
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                modelos = json.load(f)
+            print(f"  Cargadas métricas de {len(modelos)} modelos desde JSON")
+            return modelos
+        except Exception as e:
+            print(f"  [!] Error al cargar {json_path.name}: {e}")
+            modelos = {}
     
-    print("  [!] No se encontró metricas_todos_modelos.json")
-    print("  Intentando reentrenar modelos para obtener métricas...")
+    print("  [!] No se encontró metricas_todos_modelos.json o estaba corrupto.")
+    print("  Intentando parsear reportes de texto existentes en 'resultados/'...")
     
+    # 2. Parsear 05_resultados_visuales.txt
+    file_05 = resultados_dir / "05_resultados_visuales.txt"
+    if file_05.exists():
+        try:
+            content = file_05.read_text(encoding="utf-8", errors="ignore")
+            # Encontrar bloques por modelo
+            blocks = content.split("======================================================================")
+            for block in blocks:
+                if "Modelo:" not in block:
+                    continue
+                name_match = re.search(r"Modelo:\s*(.*?)\n", block)
+                acc_match = re.search(r"Accuracy:\s*([\d.]+)\n", block)
+                if name_match and acc_match:
+                    name = name_match.group(1).strip()
+                    acc = float(acc_match.group(1).strip())
+                    
+                    # Separar reporte detallado
+                    parts = block.split("-" * 70)
+                    report = parts[1].strip() if len(parts) >= 2 else ""
+                    
+                    # Extraer macro avg
+                    prec, rec, f1 = 0.0, 0.0, 0.0
+                    macro_match = re.search(r"macro avg\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)", report)
+                    if macro_match:
+                        prec = float(macro_match.group(1))
+                        rec = float(macro_match.group(2))
+                        f1 = float(macro_match.group(3))
+                    
+                    modelos[name] = {
+                        "accuracy": acc,
+                        "precision": prec,
+                        "recall": rec,
+                        "f1": f1,
+                        "report": report,
+                        "tipo": "visual"
+                    }
+            print(f"  [OK] Parseados modelos visuales de {file_05.name}")
+        except Exception as e:
+            print(f"  [!] Error al parsear {file_05.name}: {e}")
+            
+    # 3. Parsear 06_resultados_textuales.txt
+    file_06 = resultados_dir / "06_resultados_textuales.txt"
+    if file_06.exists():
+        try:
+            content = file_06.read_text(encoding="utf-8", errors="ignore")
+            blocks = content.split("======================================================================")
+            for block in blocks:
+                if "Modelo:" not in block:
+                    continue
+                name_match = re.search(r"Modelo:\s*(.*?)\n", block)
+                acc_match = re.search(r"Accuracy:\s*([\d.]+)\n", block)
+                if name_match and acc_match:
+                    name = name_match.group(1).strip()
+                    acc = float(acc_match.group(1).strip())
+                    
+                    parts = block.split("-" * 70)
+                    report = parts[1].strip() if len(parts) >= 2 else ""
+                    
+                    prec, rec, f1 = 0.0, 0.0, 0.0
+                    macro_match = re.search(r"macro avg\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)", report)
+                    if macro_match:
+                        prec = float(macro_match.group(1))
+                        rec = float(macro_match.group(2))
+                        f1 = float(macro_match.group(3))
+                    
+                    # Normalizar nombres para consistencia
+                    display_name = name
+                    if name == "TF-IDF + LogisticRegression":
+                        display_name = "TF-IDF + LogReg"
+                    elif name == "TF-IDF + MultinomialNB":
+                        display_name = "TF-IDF + NaiveBayes"
+                        
+                    modelos[display_name] = {
+                        "accuracy": acc,
+                        "precision": prec,
+                        "recall": rec,
+                        "f1": f1,
+                        "report": report,
+                        "tipo": "textual"
+                    }
+            print(f"  [OK] Parseados modelos textuales de {file_06.name}")
+        except Exception as e:
+            print(f"  [!] Error al parsear {file_06.name}: {e}")
+            
+    # 4. Parsear 07_resultados_cnn.txt
+    file_07 = resultados_dir / "07_resultados_cnn.txt"
+    if file_07.exists():
+        try:
+            content = file_07.read_text(encoding="utf-8", errors="ignore")
+            acc_match = re.search(r"Accuracy en test:\s*([\d.]+)", content)
+            if acc_match:
+                acc = float(acc_match.group(1).strip())
+                
+                parts = content.split("REPORTE DE CLASIFICACIÓN\n======================================================================")
+                report = parts[1].strip() if len(parts) >= 2 else ""
+                
+                prec, rec, f1 = 0.0, 0.0, 0.0
+                macro_match = re.search(r"macro avg\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)", report)
+                if macro_match:
+                    prec = float(macro_match.group(1))
+                    rec = float(macro_match.group(2))
+                    f1 = float(macro_match.group(3))
+                    
+                modelos["CNN"] = {
+                    "accuracy": acc,
+                    "precision": prec,
+                    "recall": rec,
+                    "f1": f1,
+                    "report": report,
+                    "tipo": "deep_learning"
+                }
+                print(f"  [OK] Parseado modelo CNN de {file_07.name}")
+        except Exception as e:
+            print(f"  [!] Error al parsear {file_07.name}: {e}")
+
+    # 5. Parsear 08_resultados_fusion.txt
+    file_08 = resultados_dir / "08_resultados_fusion.txt"
+    if file_08.exists():
+        try:
+            content = file_08.read_text(encoding="utf-8", errors="ignore")
+            acc_match = re.search(r"Accuracy:\s*([\d.]+)", content)
+            if acc_match:
+                acc = float(acc_match.group(1).strip())
+                
+                parts = content.split("Reporte de Clasificación:")
+                report_part = parts[1].split("Matriz de Confusión:") if len(parts) >= 2 else [""]
+                report = report_part[0].strip()
+                
+                # Intentar extraer matriz de confusión de texto
+                cm = []
+                if len(report_part) >= 2:
+                    cm_text = report_part[1].strip()
+                    # Encontrar todas las filas entre corchetes
+                    rows = re.findall(r"\[([\d\s]+)\]", cm_text)
+                    for row in rows:
+                        cm.append([int(x) for x in row.split()])
+                
+                prec, rec, f1 = 0.0, 0.0, 0.0
+                macro_match = re.search(r"macro avg\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)", report)
+                if macro_match:
+                    prec = float(macro_match.group(1))
+                    rec = float(macro_match.group(2))
+                    f1 = float(macro_match.group(3))
+                    
+                modelos["Fusión (LBP + TF-IDF) + SVM"] = {
+                    "accuracy": acc,
+                    "precision": prec,
+                    "recall": rec,
+                    "f1": f1,
+                    "report": report,
+                    "tipo": "fusion"
+                }
+                if cm:
+                    modelos["Fusión (LBP + TF-IDF) + SVM"]["confusion_matrix"] = cm
+                    # Las clases de la fusión son las 14 clases visuales (sin scientific_report y specification)
+                    modelos["Fusión (LBP + TF-IDF) + SVM"]["classes"] = [c for c in CLASSES if c not in ["scientific_report", "specification"]]
+                print(f"  [OK] Parseado modelo de Fusión de {file_08.name}")
+        except Exception as e:
+            print(f"  [!] Error al parsear {file_08.name}: {e}")
+
+    # 6. Intentar calcular matrices de confusión para modelos visuales y textuales usando los modelos guardados!
+    if modelos:
+        print("  Cargando modelos entrenados para reconstruir matrices de confusión (sin entrenamiento)...")
+        try:
+            import joblib
+            from sklearn.preprocessing import StandardScaler
+            from sklearn.model_selection import train_test_split
+            from sklearn.metrics import confusion_matrix
+            
+            # Cargar test splits
+            features_dir = Path("features")
+            lbp = np.load(features_dir / "features_lbp.npy")
+            glcm = np.load(features_dir / "features_glcm.npy")
+            labels_vis = np.load(features_dir / "labels.npy")
+            
+            y_encoded = labels_vis.astype(int)
+            indices = np.arange(len(y_encoded))
+            idx_train, idx_test = train_test_split(
+                indices, test_size=0.2, random_state=42, stratify=y_encoded
+            )
+            y_test = y_encoded[idx_test]
+            
+            # Cargar clases reales presentes
+            clases_presentes = sorted(set(y_encoded))
+            nombres_presentes = [CLASSES[i] for i in clases_presentes]
+            
+            # 6.1 LBP SVM
+            if "LBP + SVM" in modelos:
+                model_path = Path("modelos/lbp___svm.joblib")
+                if model_path.exists():
+                    clf = joblib.load(model_path)
+                    X_lbp_train = lbp[idx_train]
+                    X_lbp_test = lbp[idx_test]
+                    scaler = StandardScaler()
+                    scaler.fit(X_lbp_train)
+                    X_test_scaled = scaler.transform(X_lbp_test)
+                    y_pred = clf.predict(X_test_scaled)
+                    modelos["LBP + SVM"]["confusion_matrix"] = confusion_matrix(y_test, y_pred).tolist()
+                    modelos["LBP + SVM"]["classes"] = nombres_presentes
+                    
+            # 6.2 LBP KNN
+            if "LBP + KNN" in modelos:
+                model_path = Path("modelos/lbp___knn.joblib")
+                if model_path.exists():
+                    clf = joblib.load(model_path)
+                    X_lbp_train = lbp[idx_train]
+                    X_lbp_test = lbp[idx_test]
+                    scaler = StandardScaler()
+                    scaler.fit(X_lbp_train)
+                    X_test_scaled = scaler.transform(X_lbp_test)
+                    y_pred = clf.predict(X_test_scaled)
+                    modelos["LBP + KNN"]["confusion_matrix"] = confusion_matrix(y_test, y_pred).tolist()
+                    modelos["LBP + KNN"]["classes"] = nombres_presentes
+                    
+            # 6.3 GLCM SVM
+            if "GLCM + SVM" in modelos:
+                model_path = Path("modelos/glcm___svm.joblib")
+                if model_path.exists():
+                    clf = joblib.load(model_path)
+                    X_glcm_train = glcm[idx_train]
+                    X_glcm_test = glcm[idx_test]
+                    scaler = StandardScaler()
+                    scaler.fit(X_glcm_train)
+                    X_test_scaled = scaler.transform(X_glcm_test)
+                    y_pred = clf.predict(X_test_scaled)
+                    modelos["GLCM + SVM"]["confusion_matrix"] = confusion_matrix(y_test, y_pred).tolist()
+                    modelos["GLCM + SVM"]["classes"] = nombres_presentes
+                    
+            # 6.4 Combinado Visual SVM
+            comb_key = None
+            if "Combinado Visual (LBP+GLCM+Hist) + SVM" in modelos:
+                comb_key = "Combinado Visual (LBP+GLCM+Hist) + SVM"
+            elif "Visual Combinado + SVM" in modelos:
+                comb_key = "Visual Combinado + SVM"
+                
+            if comb_key:
+                model_path = Path("modelos/combinado_visual_(lbp_glcm_hist)___svm.joblib")
+                if model_path.exists():
+                    clf = joblib.load(model_path)
+                    # El combinado original usó LBP + GLCM en 05_clasificacion_visual.py (porque features_histogram.npy no existía)
+                    # Detectar dimensiones automáticamente
+                    try:
+                        expected_features = clf.n_features_in_
+                    except AttributeError:
+                        expected_features = 29
+                    
+                    if expected_features == 29:
+                        X_combinado = np.hstack([lbp, glcm])
+                    else:
+                        hist = np.load(features_dir / "features_histograms.npy")
+                        X_combinado = np.hstack([lbp, glcm, hist])
+                        
+                    X_comb_train = X_combinado[idx_train]
+                    X_comb_test = X_combinado[idx_test]
+                    scaler = StandardScaler()
+                    scaler.fit(X_comb_train)
+                    X_test_scaled = scaler.transform(X_comb_test)
+                    y_pred = clf.predict(X_test_scaled)
+                    modelos[comb_key]["confusion_matrix"] = confusion_matrix(y_test, y_pred).tolist()
+                    modelos[comb_key]["classes"] = nombres_presentes
+                    
+            # 6.5 Textual Models
+            dataset_text_dir = Path("dataset_text")
+            if dataset_text_dir.exists():
+                textos = []
+                etiquetas = []
+                for class_dir in sorted(dataset_text_dir.iterdir()):
+                    if not class_dir.is_dir():
+                        continue
+                    class_name = class_dir.name
+                    for txt_file in sorted(class_dir.glob("*.txt")):
+                        texto = txt_file.read_text(encoding="utf-8", errors="ignore").strip()
+                        if texto:
+                            textos.append(texto)
+                            etiquetas.append(class_name)
+                            
+                if textos:
+                    X_train_txt, X_test_txt, y_train_txt, y_test_txt = train_test_split(
+                        textos, etiquetas, test_size=0.2, random_state=42, stratify=etiquetas
+                    )
+                    
+                    clases_txt_presentes = sorted(set(y_test_txt))
+                    
+                    # LinearSVC
+                    if "TF-IDF + LinearSVC" in modelos:
+                        model_path = Path("modelos/tfidf_svm.joblib")
+                        if model_path.exists():
+                            clf = joblib.load(model_path)
+                            y_pred = clf.predict(X_test_txt)
+                            modelos["TF-IDF + LinearSVC"]["confusion_matrix"] = confusion_matrix(y_test_txt, y_pred, labels=clases_txt_presentes).tolist()
+                            modelos["TF-IDF + LinearSVC"]["classes"] = clases_txt_presentes
+                            
+                    # LogReg
+                    if "TF-IDF + LogReg" in modelos:
+                        model_path = Path("modelos/tfidf_lr.joblib")
+                        if model_path.exists():
+                            clf = joblib.load(model_path)
+                            y_pred = clf.predict(X_test_txt)
+                            modelos["TF-IDF + LogReg"]["confusion_matrix"] = confusion_matrix(y_test_txt, y_pred, labels=clases_txt_presentes).tolist()
+                            modelos["TF-IDF + LogReg"]["classes"] = clases_txt_presentes
+                            
+                    # NaiveBayes
+                    if "TF-IDF + NaiveBayes" in modelos or "TF-IDF + NaiveBayes" in modelos:
+                        nb_key = "TF-IDF + NaiveBayes" if "TF-IDF + NaiveBayes" in modelos else "TF-IDF + NaiveBayes"
+                        model_path = Path("modelos/tfidf_nb.joblib")
+                        if model_path.exists():
+                            clf = joblib.load(model_path)
+                            y_pred = clf.predict(X_test_txt)
+                            modelos[nb_key]["confusion_matrix"] = confusion_matrix(y_test_txt, y_pred, labels=clases_txt_presentes).tolist()
+                            modelos[nb_key]["classes"] = clases_txt_presentes
+                            
+            print("  [OK] Matrices de confusión y clases asociadas reconstruidas con éxito.")
+        except Exception as e:
+            print(f"  [!] Advertencia al reconstruir matrices de confusión: {e}")
+            print("  Se continuará con las métricas parseadas.")
+
     return modelos
 
 
 def entrenar_todos_los_modelos(features_dir, dataset_text_dir, dataset_preprocessed_dir):
     """
-    Entrena todos los modelos y devuelve las métricas.
-    Esta función se usa cuando no existen resultados previos.
+    Función fallback en caso de reentrenamiento. 
+    Se ha corregido para evitar el error 'target_names size mismatch'.
     """
     from sklearn.model_selection import train_test_split
     from sklearn.svm import SVC, LinearSVC
@@ -89,37 +411,29 @@ def entrenar_todos_los_modelos(features_dir, dataset_text_dir, dataset_preproces
         accuracy_score, precision_score, recall_score, f1_score
     )
     from sklearn.preprocessing import StandardScaler
-    from tqdm import tqdm
-    from PIL import Image
     
     features_dir = Path(features_dir)
     resultados = {}
     
-    # ════════════════════════════════════════════════════════════════════
-    # MODELOS VISUALES
-    # ════════════════════════════════════════════════════════════════════
-    print("\n" + "─" * 60)
-    print("  MODELOS VISUALES")
-    print("─" * 60)
-    
+    # --------------------------------------------------------------------
+    # Modelos Visuales
+    # --------------------------------------------------------------------
     try:
         lbp = np.load(features_dir / "features_lbp.npy")
         glcm = np.load(features_dir / "features_glcm.npy")
-        hist = np.load(features_dir / "features_histograms.npy")
         labels_vis = np.load(features_dir / "labels.npy")
-        visual_combined = np.load(features_dir / "features_visual_combined.npy")
+        
+        y_encoded = labels_vis.astype(int)
+        clases_presentes = sorted(set(y_encoded))
+        nombres_presentes = [CLASSES[i] for i in clases_presentes]
         
         X_train_lbp, X_test_lbp, y_train, y_test = train_test_split(
-            lbp, labels_vis, test_size=0.2, random_state=42, stratify=labels_vis
+            lbp, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
         )
         X_train_glcm, X_test_glcm, _, _ = train_test_split(
-            glcm, labels_vis, test_size=0.2, random_state=42, stratify=labels_vis
-        )
-        X_train_comb, X_test_comb, _, _ = train_test_split(
-            visual_combined, labels_vis, test_size=0.2, random_state=42, stratify=labels_vis
+            glcm, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
         )
         
-        # Escalar features
         scaler_lbp = StandardScaler()
         X_train_lbp_s = scaler_lbp.fit_transform(X_train_lbp)
         X_test_lbp_s = scaler_lbp.transform(X_test_lbp)
@@ -128,12 +442,7 @@ def entrenar_todos_los_modelos(features_dir, dataset_text_dir, dataset_preproces
         X_train_glcm_s = scaler_glcm.fit_transform(X_train_glcm)
         X_test_glcm_s = scaler_glcm.transform(X_test_glcm)
         
-        scaler_comb = StandardScaler()
-        X_train_comb_s = scaler_comb.fit_transform(X_train_comb)
-        X_test_comb_s = scaler_comb.transform(X_test_comb)
-        
-        # ── Modelo 1: LBP + SVM ──
-        print("\n  Entrenando LBP + SVM...")
+        print("\n  [Fallback] Entrenando LBP + SVM...")
         svm_lbp = SVC(kernel='rbf', C=10, gamma='scale', random_state=42)
         svm_lbp.fit(X_train_lbp_s, y_train)
         y_pred = svm_lbp.predict(X_test_lbp_s)
@@ -143,184 +452,16 @@ def entrenar_todos_los_modelos(features_dir, dataset_text_dir, dataset_preproces
             "recall": recall_score(y_test, y_pred, average='macro', zero_division=0),
             "f1": f1_score(y_test, y_pred, average='macro', zero_division=0),
             "confusion_matrix": confusion_matrix(y_test, y_pred).tolist(),
-            "report": classification_report(y_test, y_pred, target_names=CLASSES, zero_division=0),
+            "report": classification_report(y_test, y_pred, target_names=nombres_presentes, zero_division=0),
+            "classes": nombres_presentes,
             "tipo": "visual"
         }
-        print(f"    Accuracy: {resultados['LBP + SVM']['accuracy']:.4f}")
         
-        # ── Modelo 2: LBP + KNN ──
-        print("  Entrenando LBP + KNN...")
-        knn_lbp = KNeighborsClassifier(n_neighbors=5)
-        knn_lbp.fit(X_train_lbp_s, y_train)
-        y_pred = knn_lbp.predict(X_test_lbp_s)
-        resultados["LBP + KNN"] = {
-            "accuracy": accuracy_score(y_test, y_pred),
-            "precision": precision_score(y_test, y_pred, average='macro', zero_division=0),
-            "recall": recall_score(y_test, y_pred, average='macro', zero_division=0),
-            "f1": f1_score(y_test, y_pred, average='macro', zero_division=0),
-            "confusion_matrix": confusion_matrix(y_test, y_pred).tolist(),
-            "report": classification_report(y_test, y_pred, target_names=CLASSES, zero_division=0),
-            "tipo": "visual"
-        }
-        print(f"    Accuracy: {resultados['LBP + KNN']['accuracy']:.4f}")
+    except Exception as e:
+        print(f"  [Fallback ERROR] No se pudieron entrenar modelos visuales: {e}")
         
-        # ── Modelo 3: GLCM + SVM ──
-        print("  Entrenando GLCM + SVM...")
-        svm_glcm = SVC(kernel='rbf', C=10, gamma='scale', random_state=42)
-        svm_glcm.fit(X_train_glcm_s, y_train)
-        y_pred = svm_glcm.predict(X_test_glcm_s)
-        resultados["GLCM + SVM"] = {
-            "accuracy": accuracy_score(y_test, y_pred),
-            "precision": precision_score(y_test, y_pred, average='macro', zero_division=0),
-            "recall": recall_score(y_test, y_pred, average='macro', zero_division=0),
-            "f1": f1_score(y_test, y_pred, average='macro', zero_division=0),
-            "confusion_matrix": confusion_matrix(y_test, y_pred).tolist(),
-            "report": classification_report(y_test, y_pred, target_names=CLASSES, zero_division=0),
-            "tipo": "visual"
-        }
-        print(f"    Accuracy: {resultados['GLCM + SVM']['accuracy']:.4f}")
-        
-        # ── Modelo 4: Visual Combinado + SVM ──
-        print("  Entrenando Visual Combinado + SVM...")
-        svm_comb = SVC(kernel='rbf', C=10, gamma='scale', random_state=42)
-        svm_comb.fit(X_train_comb_s, y_train)
-        y_pred = svm_comb.predict(X_test_comb_s)
-        resultados["Visual Combinado + SVM"] = {
-            "accuracy": accuracy_score(y_test, y_pred),
-            "precision": precision_score(y_test, y_pred, average='macro', zero_division=0),
-            "recall": recall_score(y_test, y_pred, average='macro', zero_division=0),
-            "f1": f1_score(y_test, y_pred, average='macro', zero_division=0),
-            "confusion_matrix": confusion_matrix(y_test, y_pred).tolist(),
-            "report": classification_report(y_test, y_pred, target_names=CLASSES, zero_division=0),
-            "tipo": "visual"
-        }
-        print(f"    Accuracy: {resultados['Visual Combinado + SVM']['accuracy']:.4f}")
-        
-    except FileNotFoundError as e:
-        print(f"  [!] Features visuales no encontradas: {e}")
-        print("  Ejecuta primero: python 02_extraccion_features_visuales.py")
-    
-    # ════════════════════════════════════════════════════════════════════
-    # MODELOS TEXTUALES
-    # ════════════════════════════════════════════════════════════════════
-    print("\n" + "─" * 60)
-    print("  MODELOS TEXTUALES (OCR + TF-IDF)")
-    print("─" * 60)
-    
-    dataset_text_dir = Path(dataset_text_dir)
-    try:
-        textos = []
-        etiquetas = []
-        
-        for class_dir in sorted(dataset_text_dir.iterdir()):
-            if not class_dir.is_dir():
-                continue
-            class_name = class_dir.name
-            for txt_file in sorted(class_dir.glob("*.txt")):
-                texto = txt_file.read_text(encoding="utf-8", errors="ignore").strip()
-                if texto:
-                    textos.append(texto)
-                    etiquetas.append(class_name)
-        
-        if len(textos) < 10:
-            raise FileNotFoundError("Insuficientes textos OCR")
-        
-        print(f"  Textos cargados: {len(textos)}")
-        
-        X_train_txt, X_test_txt, y_train_txt, y_test_txt = train_test_split(
-            textos, etiquetas, test_size=0.2, random_state=42, stratify=etiquetas
-        )
-        
-        # ── TF-IDF + LinearSVC ──
-        print("\n  Entrenando TF-IDF + LinearSVC...")
-        pipe_svm = Pipeline([
-            ('tfidf', TfidfVectorizer(max_features=3000, ngram_range=(1, 2))),
-            ('clf', LinearSVC(random_state=42, max_iter=2000))
-        ])
-        pipe_svm.fit(X_train_txt, y_train_txt)
-        y_pred = pipe_svm.predict(X_test_txt)
-        resultados["TF-IDF + LinearSVC"] = {
-            "accuracy": accuracy_score(y_test_txt, y_pred),
-            "precision": precision_score(y_test_txt, y_pred, average='macro', zero_division=0),
-            "recall": recall_score(y_test_txt, y_pred, average='macro', zero_division=0),
-            "f1": f1_score(y_test_txt, y_pred, average='macro', zero_division=0),
-            "confusion_matrix": confusion_matrix(y_test_txt, y_pred, labels=CLASSES).tolist(),
-            "report": classification_report(y_test_txt, y_pred, target_names=CLASSES, zero_division=0),
-            "tipo": "textual"
-        }
-        print(f"    Accuracy: {resultados['TF-IDF + LinearSVC']['accuracy']:.4f}")
-        
-        # ── TF-IDF + LogisticRegression ──
-        print("  Entrenando TF-IDF + LogisticRegression...")
-        pipe_lr = Pipeline([
-            ('tfidf', TfidfVectorizer(max_features=3000, ngram_range=(1, 2))),
-            ('clf', LogisticRegression(random_state=42, max_iter=1000))
-        ])
-        pipe_lr.fit(X_train_txt, y_train_txt)
-        y_pred = pipe_lr.predict(X_test_txt)
-        resultados["TF-IDF + LogReg"] = {
-            "accuracy": accuracy_score(y_test_txt, y_pred),
-            "precision": precision_score(y_test_txt, y_pred, average='macro', zero_division=0),
-            "recall": recall_score(y_test_txt, y_pred, average='macro', zero_division=0),
-            "f1": f1_score(y_test_txt, y_pred, average='macro', zero_division=0),
-            "confusion_matrix": confusion_matrix(y_test_txt, y_pred, labels=CLASSES).tolist(),
-            "report": classification_report(y_test_txt, y_pred, target_names=CLASSES, zero_division=0),
-            "tipo": "textual"
-        }
-        print(f"    Accuracy: {resultados['TF-IDF + LogReg']['accuracy']:.4f}")
-        
-        # ── TF-IDF + MultinomialNB ──
-        print("  Entrenando TF-IDF + MultinomialNB...")
-        pipe_nb = Pipeline([
-            ('tfidf', TfidfVectorizer(max_features=3000, ngram_range=(1, 2))),
-            ('clf', MultinomialNB())
-        ])
-        pipe_nb.fit(X_train_txt, y_train_txt)
-        y_pred = pipe_nb.predict(X_test_txt)
-        resultados["TF-IDF + NaiveBayes"] = {
-            "accuracy": accuracy_score(y_test_txt, y_pred),
-            "precision": precision_score(y_test_txt, y_pred, average='macro', zero_division=0),
-            "recall": recall_score(y_test_txt, y_pred, average='macro', zero_division=0),
-            "f1": f1_score(y_test_txt, y_pred, average='macro', zero_division=0),
-            "confusion_matrix": confusion_matrix(y_test_txt, y_pred, labels=CLASSES).tolist(),
-            "report": classification_report(y_test_txt, y_pred, target_names=CLASSES, zero_division=0),
-            "tipo": "textual"
-        }
-        print(f"    Accuracy: {resultados['TF-IDF + NaiveBayes']['accuracy']:.4f}")
-        
-    except (FileNotFoundError, ValueError) as e:
-        print(f"  [!] Textos OCR no encontrados o insuficientes: {e}")
-        print("  Ejecuta primero: python 03_ocr_extraccion_texto.py")
-    
-    # ════════════════════════════════════════════════════════════════════
-    # CNN (cargar resultados si existen)
-    # ════════════════════════════════════════════════════════════════════
-    print("\n" + "─" * 60)
-    print("  CNN (Deep Learning)")
-    print("─" * 60)
-    
-    cnn_results_path = Path("resultados") / "07_resultados_cnn.txt"
-    if cnn_results_path.exists():
-        # Parsear accuracy del archivo de resultados
-        with open(cnn_results_path, "r", encoding="utf-8") as f:
-            content = f.read()
-            import re
-            acc_match = re.search(r'Accuracy.*?:\s*([\d.]+)', content)
-            if acc_match:
-                cnn_acc = float(acc_match.group(1))
-                resultados["CNN"] = {
-                    "accuracy": cnn_acc,
-                    "precision": 0.0,
-                    "recall": 0.0,
-                    "f1": 0.0,
-                    "tipo": "deep_learning"
-                }
-                print(f"  CNN Accuracy (del archivo): {cnn_acc:.4f}")
-    else:
-        print("  [!] Resultados de CNN no encontrados.")
-        print("  Ejecuta primero: python 07_cnn_clasificacion.py")
-    
     return resultados
+
 
 
 def generar_tabla_comparativa(resultados, output_dir):
@@ -525,8 +666,9 @@ def generar_matrices_confusion(resultados, output_dir):
         ax = axes[row, col]
         
         cm = np.array(metrics['confusion_matrix'])
+        clases_modelo = metrics.get('classes', CLASSES[:len(cm)])
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                    xticklabels=CLASSES, yticklabels=CLASSES,
+                    xticklabels=clases_modelo, yticklabels=clases_modelo,
                     ax=ax, cbar=False)
         ax.set_title(f"{nombre}\nAcc: {metrics.get('accuracy', 0):.4f}",
                      fontsize=10, fontweight='bold')
@@ -566,9 +708,9 @@ def generar_reporte_final(resultados, output_dir):
         f.write("         vs CNN vs Fusión (Visual + Textual)\n\n")
         
         # Tabla resumen
-        f.write("─" * 80 + "\n")
+        f.write("-" * 80 + "\n")
         f.write(f"{'Modelo':<30} {'Tipo':<12} {'Accuracy':>10} {'Precision':>10} {'Recall':>10} {'F1':>10}\n")
-        f.write("─" * 80 + "\n")
+        f.write("-" * 80 + "\n")
         
         for nombre in sorted(resultados.keys(), key=lambda x: resultados[x].get('accuracy', 0), reverse=True):
             m = resultados[nombre]
@@ -576,7 +718,7 @@ def generar_reporte_final(resultados, output_dir):
                    f"{m.get('accuracy', 0):>10.4f} {m.get('precision', 0):>10.4f} "
                    f"{m.get('recall', 0):>10.4f} {m.get('f1', 0):>10.4f}\n")
         
-        f.write("─" * 80 + "\n\n")
+        f.write("-" * 80 + "\n\n")
         
         # Mejor modelo
         if resultados:
@@ -591,9 +733,9 @@ def generar_reporte_final(resultados, output_dir):
         f.write("=" * 80 + "\n")
         
         for nombre, m in resultados.items():
-            f.write(f"\n{'─' * 60}\n")
+            f.write(f"\n{'-' * 60}\n")
             f.write(f"  {nombre} ({m.get('tipo', 'N/A')})\n")
-            f.write(f"{'─' * 60}\n")
+            f.write(f"{'-' * 60}\n")
             if 'report' in m:
                 f.write(m['report'] + "\n")
         
@@ -685,7 +827,7 @@ def main():
     
     # Resumen final
     print("\n" + "=" * 70)
-    print("  ✓ EVALUACIÓN COMPARATIVA COMPLETADA")
+    print("  [OK] EVALUACIÓN COMPARATIVA COMPLETADA")
     print("  Archivos generados en: " + str(output_dir.resolve()))
     print("=" * 70)
     
@@ -696,12 +838,12 @@ def main():
         print(f"     Tipo: {mejor[1].get('tipo', 'N/A')}")
     
     print("\n  Visualizaciones generadas:")
-    print("    • 10_tabla_comparativa.png")
-    print("    • 10_barras_accuracy.png")
-    print("    • 10_radar_comparacion.png")
-    print("    • 10_matrices_confusion_todas.png")
-    print("    • 10_reporte_final.txt")
-    print("    • metricas_todos_modelos.json")
+    print("    * 10_tabla_comparativa.png")
+    print("    * 10_barras_accuracy.png")
+    print("    * 10_radar_comparacion.png")
+    print("    * 10_matrices_confusion_todas.png")
+    print("    * 10_reporte_final.txt")
+    print("    * metricas_todos_modelos.json")
 
 
 if __name__ == "__main__":

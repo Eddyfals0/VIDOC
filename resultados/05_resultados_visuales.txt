@@ -1,0 +1,122 @@
+======================================================================
+  RESULTADOS DE CLASIFICACIÓN VISUAL DE DOCUMENTOS
+  Proyecto Final — Recuperación de Información — BUAP 2026
+======================================================================
+
+RESUMEN DE ACCURACY POR MODELO
+----------------------------------------
+  LBP + SVM                                → 0.5446
+  LBP + KNN                                → 0.4386
+  GLCM + SVM                               → 0.5729
+  Combinado Visual (LBP+GLCM+Hist) + SVM   → 0.6236
+
+ Mejor modelo: Combinado Visual (LBP+GLCM+Hist) + SVM (Accuracy: 0.6236)
+
+======================================================================
+  Modelo: LBP + SVM
+  Accuracy: 0.5446
+  Matriz de confusión: resultados\05_confusion_lbp___svm.png
+  Modelo guardado: modelos\lbp___svm.joblib
+----------------------------------------------------------------------
+                        precision    recall  f1-score   support
+
+         advertisement       0.61      0.66      0.63       200
+                budget       0.45      0.42      0.44       200
+                 email       0.72      0.83      0.77       200
+           file_folder       0.66      0.75      0.70       200
+                  form       0.40      0.39      0.39       200
+           handwritten       0.73      0.80      0.76       200
+               invoice       0.37      0.40      0.38       200
+                letter       0.38      0.35      0.37       200
+                  memo       0.30      0.35      0.32       200
+          news_article       0.63      0.60      0.62       200
+          presentation       0.49      0.40      0.44       200
+         questionnaire       0.41      0.34      0.37       200
+                resume       0.66      0.61      0.64       200
+scientific_publication       0.80      0.70      0.75       200
+
+              accuracy                           0.54      2800
+             macro avg       0.54      0.54      0.54      2800
+          weighted avg       0.54      0.54      0.54      2800
+
+======================================================================
+  Modelo: LBP + KNN
+  Accuracy: 0.4386
+  Matriz de confusión: resultados\05_confusion_lbp___knn.png
+  Modelo guardado: modelos\lbp___knn.joblib
+----------------------------------------------------------------------
+                        precision    recall  f1-score   support
+
+         advertisement       0.49      0.65      0.56       200
+                budget       0.32      0.41      0.36       200
+                 email       0.64      0.81      0.71       200
+           file_folder       0.62      0.62      0.62       200
+                  form       0.26      0.28      0.27       200
+           handwritten       0.62      0.65      0.63       200
+               invoice       0.26      0.28      0.27       200
+                letter       0.24      0.26      0.25       200
+                  memo       0.24      0.23      0.23       200
+          news_article       0.43      0.43      0.43       200
+          presentation       0.45      0.21      0.29       200
+         questionnaire       0.43      0.30      0.36       200
+                resume       0.52      0.47      0.50       200
+scientific_publication       0.68      0.54      0.60       200
+
+              accuracy                           0.44      2800
+             macro avg       0.44      0.44      0.43      2800
+          weighted avg       0.44      0.44      0.43      2800
+
+======================================================================
+  Modelo: GLCM + SVM
+  Accuracy: 0.5729
+  Matriz de confusión: resultados\05_confusion_glcm___svm.png
+  Modelo guardado: modelos\glcm___svm.joblib
+----------------------------------------------------------------------
+                        precision    recall  f1-score   support
+
+         advertisement       0.56      0.77      0.65       200
+                budget       0.47      0.49      0.48       200
+                 email       0.75      0.73      0.74       200
+           file_folder       0.74      0.84      0.79       200
+                  form       0.45      0.40      0.43       200
+           handwritten       0.75      0.72      0.73       200
+               invoice       0.45      0.40      0.43       200
+                letter       0.38      0.37      0.38       200
+                  memo       0.34      0.43      0.38       200
+          news_article       0.72      0.62      0.66       200
+          presentation       0.56      0.47      0.51       200
+         questionnaire       0.51      0.41      0.46       200
+                resume       0.61      0.65      0.63       200
+scientific_publication       0.75      0.71      0.73       200
+
+              accuracy                           0.57      2800
+             macro avg       0.58      0.57      0.57      2800
+          weighted avg       0.58      0.57      0.57      2800
+
+======================================================================
+  Modelo: Combinado Visual (LBP+GLCM+Hist) + SVM
+  Accuracy: 0.6236
+  Matriz de confusión: resultados\05_confusion_combinado_visual_(lbp_glcm_hist)___svm.png
+  Modelo guardado: modelos\combinado_visual_(lbp_glcm_hist)___svm.joblib
+----------------------------------------------------------------------
+                        precision    recall  f1-score   support
+
+         advertisement       0.69      0.78      0.73       200
+                budget       0.54      0.51      0.52       200
+                 email       0.83      0.86      0.85       200
+           file_folder       0.79      0.86      0.83       200
+                  form       0.47      0.46      0.46       200
+           handwritten       0.80      0.84      0.82       200
+               invoice       0.49      0.51      0.50       200
+                letter       0.41      0.39      0.40       200
+                  memo       0.37      0.42      0.39       200
+          news_article       0.76      0.67      0.71       200
+          presentation       0.60      0.56      0.58       200
+         questionnaire       0.50      0.47      0.48       200
+                resume       0.70      0.69      0.69       200
+scientific_publication       0.78      0.73      0.76       200
+
+              accuracy                           0.62      2800
+             macro avg       0.62      0.62      0.62      2800
+          weighted avg       0.62      0.62      0.62      2800
+

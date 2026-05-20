@@ -1,0 +1,23 @@
+# Archivos temporales y cachés
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Datasets y derivados pesados
+dataset/
+dataset_completo/
+dataset_extraido/
+dataset_preprocessed/
+dataset_simple_preview/
+dataset_test/
+dataset_text/
+dataset_text_raw/
+Images_test/
+
+# Artefactos intermedios generados por el pipeline
+features/
+modelos/
+*.parquet
+
+# Mantener los resultados finales visibles por ahora
+# resultados/

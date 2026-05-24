@@ -21,17 +21,9 @@ from pathlib import Path
 import os
 from pathlib import Path
 
-# Cargar clases dinámicamente de lo que se haya logrado descargar (ej. 14 de 16)
-_dataset_path = Path("dataset")
-if _dataset_path.exists():
-    CLASSES = sorted([d.name for d in _dataset_path.iterdir() if d.is_dir()])
-else:
-    CLASSES = [
-        "letter", "form", "email", "handwritten", "advertisement",
-        "scientific_report", "scientific_publication", "specification",
-        "file_folder", "news_article", "budget", "invoice",
-        "presentation", "questionnaire", "resume", "memo"
-    ]
+from project_config import DEFAULT_CLASSES_14
+
+CLASSES = DEFAULT_CLASSES_14
 
 
 def cargar_features_visuales(features_dir):
@@ -41,11 +33,12 @@ def cargar_features_visuales(features_dir):
     lbp = np.load(features_dir / "features_lbp.npy")
     labels = np.load(features_dir / "labels.npy")
     class_names = np.load(features_dir / "class_names.npy", allow_pickle=True)
+    file_names = np.load(features_dir / "file_names_visual.npy", allow_pickle=True)
     
     print(f"  Features LBP: {lbp.shape}")
     print(f"  Etiquetas visuales: {labels.shape}")
     
-    return lbp, labels, class_names
+    return lbp, labels, class_names, file_names
 
 
 def cargar_features_textuales(features_dir):
@@ -55,33 +48,53 @@ def cargar_features_textuales(features_dir):
     
     tfidf = sparse.load_npz(features_dir / "tfidf_sklearn.npz")
     labels = np.load(features_dir / "labels_text.npy")
+    file_names = np.load(features_dir / "file_names_text.npy", allow_pickle=True)
     
     print(f"  Features TF-IDF: {tfidf.shape}")
     print(f"  Etiquetas textuales: {labels.shape}")
     
-    return tfidf, labels
+    return tfidf, labels, file_names
 
 
-def alinear_datasets(lbp, labels_vis, tfidf, labels_txt):
+def alinear_datasets(lbp, labels_vis, class_names, file_names_vis, tfidf, labels_txt, file_names_txt):
     """
     Alinea los datasets visual y textual para que tengan las mismas muestras.
     Si algún documento no tiene OCR exitoso, se excluye de la fusión.
     """
-    # Encontrar índices comunes
-    n_vis = len(labels_vis)
-    n_txt = len(labels_txt)
-    
-    # Si tienen el mismo tamaño, asumimos alineación por orden
-    n = min(n_vis, n_txt)
-    
-    print(f"\n  Muestras visuales: {n_vis}")
-    print(f"  Muestras textuales: {n_txt}")
-    print(f"  Muestras para fusión: {n}")
-    
-    lbp_aligned = lbp[:n]
-    tfidf_aligned = tfidf[:n]
-    labels_aligned = labels_vis[:n]
-    
+    from scipy import sparse
+
+    def key(path):
+        p = Path(str(path))
+        return f"{p.parent.name}/{p.stem}"
+
+    text_index = {key(path): i for i, path in enumerate(file_names_txt)}
+    visual_indices = []
+    text_indices = []
+    labels_aligned = []
+
+    for i, path in enumerate(file_names_vis):
+        k = key(path)
+        j = text_index.get(k)
+        if j is None:
+            continue
+        label_name = str(class_names[int(labels_vis[i])])
+        if label_name != str(labels_txt[j]):
+            continue
+        visual_indices.append(i)
+        text_indices.append(j)
+        labels_aligned.append(label_name)
+
+    print(f"\n  Muestras visuales: {len(labels_vis)}")
+    print(f"  Muestras textuales: {len(labels_txt)}")
+    print(f"  Muestras alineadas por documento: {len(visual_indices)}")
+
+    if not visual_indices:
+        raise ValueError("No se encontraron documentos comunes entre features visuales y textuales.")
+
+    lbp_aligned = lbp[visual_indices]
+    tfidf_aligned = tfidf[text_indices]
+    labels_aligned = np.array(labels_aligned)
+
     return lbp_aligned, tfidf_aligned, labels_aligned
 
 
@@ -154,12 +167,11 @@ def entrenar_y_evaluar(features, labels, output_dir):
     y_pred = svm_fusion.predict(X_test_scaled)
     
     # Filtrar solo clases presentes en los datos de prueba
-    clases_presentes = sorted(set(y_test))
-    nombres_presentes = [CLASSES[i] for i in clases_presentes]
+    nombres_presentes = sorted(set(y_test))
     
     accuracy = accuracy_score(y_test, y_pred)
-    report = classification_report(y_test, y_pred, target_names=nombres_presentes, zero_division=0)
-    cm = confusion_matrix(y_test, y_pred)
+    report = classification_report(y_test, y_pred, labels=nombres_presentes, target_names=nombres_presentes, zero_division=0)
+    cm = confusion_matrix(y_test, y_pred, labels=nombres_presentes)
     
     print(f"\n  Accuracy Fusión (LBP+TF-IDF) + SVM: {accuracy:.4f}")
     print(f"\n{report}")
@@ -223,15 +235,15 @@ def main():
     
     # 1. Cargar features
     print("\n[1/4] Cargando features visuales...")
-    lbp, labels_vis, class_names = cargar_features_visuales(args.features_dir)
+    lbp, labels_vis, class_names, file_names_vis = cargar_features_visuales(args.features_dir)
     
     print("\n[2/4] Cargando features textuales...")
-    tfidf, labels_txt = cargar_features_textuales(args.features_dir)
+    tfidf, labels_txt, file_names_txt = cargar_features_textuales(args.features_dir)
     
     # 2. Alinear datasets
     print("\n[3/4] Alineando datasets...")
     lbp_aligned, tfidf_aligned, labels = alinear_datasets(
-        lbp, labels_vis, tfidf, labels_txt
+        lbp, labels_vis, class_names, file_names_vis, tfidf, labels_txt, file_names_txt
     )
     
     # 3. Fusionar

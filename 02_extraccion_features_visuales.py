@@ -63,19 +63,10 @@ warnings.filterwarnings("ignore", category=UserWarning)
 import os
 from pathlib import Path
 
-# Cargar clases dinámicamente de lo que se haya logrado descargar (ej. 14 de 16)
-_dataset_path = Path("dataset")
-if _dataset_path.exists():
-    _clases_encontradas = sorted([d.name for d in _dataset_path.iterdir() if d.is_dir()])
-    if _clases_encontradas:
-        CLASES = _clases_encontradas
-        CLASSES = _clases_encontradas
-    else:
-        CLASES = ["letter", "form", "email", "handwritten", "advertisement", "scientific_report", "scientific_publication", "specification", "file_folder", "news_article", "budget", "invoice", "presentation", "questionnaire", "resume", "memo"]
-        CLASSES = CLASES
-else:
-    CLASES = ["letter", "form", "email", "handwritten", "advertisement", "scientific_report", "scientific_publication", "specification", "file_folder", "news_article", "budget", "invoice", "presentation", "questionnaire", "resume", "memo"]
-    CLASSES = CLASES
+from project_config import classes_with_files
+
+CLASES = classes_with_files("dataset_preprocessed/256x256")
+CLASSES = CLASES
 
 # Parámetros de LBP (Local Binary Patterns)
 LBP_RADIUS = 3       # Radio del vecindario circular
@@ -348,11 +339,16 @@ def ejecutar_extraccion(dir_entrada: str, dir_salida: str) -> None:
         dir_entrada (str): Directorio con imágenes preprocesadas (256x256).
         dir_salida (str): Directorio donde se guardarán los archivos .npy.
     """
+    global CLASES, CLASSES
+
     # Validar directorio de entrada
     if not os.path.isdir(dir_entrada):
         print(f"\n[ERROR] Directorio de entrada no encontrado: {dir_entrada}")
         print("  Ejecuta primero: python 01_preprocesamiento_imagenes.py")
         sys.exit(1)
+
+    CLASES = classes_with_files(dir_entrada)
+    CLASSES = CLASES
 
     # Crear directorio de salida para features
     os.makedirs(dir_salida, exist_ok=True)
@@ -402,7 +398,7 @@ def ejecutar_extraccion(dir_entrada: str, dir_salida: str) -> None:
                 todas_glcm.append(feat_glcm)
                 todos_hist.append(feat_hist)
                 todas_etiquetas.append(idx_clase)
-                nombres_archivos.append(os.path.basename(ruta))
+                nombres_archivos.append(str(Path(ruta).relative_to(dir_entrada)))
 
                 total_procesadas += 1
 
@@ -421,7 +417,10 @@ def ejecutar_extraccion(dir_entrada: str, dir_salida: str) -> None:
     features_glcm = np.array(todas_glcm, dtype=np.float32)
     features_hist = np.array(todos_hist, dtype=np.float32)
     labels = np.array(todas_etiquetas, dtype=np.int32)
-    class_names = np.array(CLASES)
+    clases_presentes = [CLASES[i] for i in sorted(set(labels.tolist()))]
+    remap = {old_idx: new_idx for new_idx, old_idx in enumerate(sorted(set(labels.tolist())))}
+    labels = np.array([remap[int(label)] for label in labels], dtype=np.int32)
+    class_names = np.array(clases_presentes)
 
     # Combinar las tres familias de features en un solo vector
     # Dimensión total: LBP(26) + GLCM(60) + Hist(256) = 342
@@ -439,6 +438,7 @@ def ejecutar_extraccion(dir_entrada: str, dir_salida: str) -> None:
         "features_visual_combined.npy": features_combined,
         "labels.npy": labels,
         "class_names.npy": class_names,
+        "file_names_visual.npy": np.array(nombres_archivos),
     }
 
     for nombre_archivo, array in archivos_salida.items():

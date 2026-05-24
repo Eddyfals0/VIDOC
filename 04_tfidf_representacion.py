@@ -48,23 +48,14 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from tqdm import tqdm
 
 
-# Las 16 clases del dataset RVL-CDIP
+# Clases del proyecto RVL-CDIP reducido a 14 categorias descargadas.
 import os
 from pathlib import Path
 
-# Cargar clases dinámicamente de lo que se haya logrado descargar (ej. 14 de 16)
-_dataset_path = Path("dataset")
-if _dataset_path.exists():
-    _clases_encontradas = sorted([d.name for d in _dataset_path.iterdir() if d.is_dir()])
-    if _clases_encontradas:
-        CLASES = _clases_encontradas
-        CLASSES = _clases_encontradas
-    else:
-        CLASES = ["letter", "form", "email", "handwritten", "advertisement", "scientific_report", "scientific_publication", "specification", "file_folder", "news_article", "budget", "invoice", "presentation", "questionnaire", "resume", "memo"]
-        CLASSES = CLASES
-else:
-    CLASES = ["letter", "form", "email", "handwritten", "advertisement", "scientific_report", "scientific_publication", "specification", "file_folder", "news_article", "budget", "invoice", "presentation", "questionnaire", "resume", "memo"]
-    CLASSES = CLASES
+from project_config import classes_with_files
+
+CLASES = classes_with_files("dataset_text", patterns=("*.txt",))
+CLASSES = CLASES
 
 
 # =============================================================================
@@ -593,6 +584,10 @@ def main():
     ruta_labels = Path(args.features_dir) / 'labels_text.npy'
     np.save(str(ruta_labels), np.array(etiquetas))
     print(f"  [OK] Etiquetas guardadas en: {ruta_labels}")
+
+    ruta_names = Path(args.features_dir) / 'file_names_text.npy'
+    np.save(str(ruta_names), np.array(nombres))
+    print(f"  [OK] Nombres de documentos guardados en: {ruta_names}")
 
     # =========================================================================
     #  PASO 8: Análisis de top términos por clase

@@ -11,8 +11,8 @@ En instituciones educativas, empresas y gobierno se manejan grandes volúmenes d
 
 **Pregunta central:** ¿Se puede construir un sistema que **clasifique documentos escaneados por tipo** (factura, credencial, acta, etc.) y permita **buscar texto dentro de ellos**, combinando descriptores visuales, OCR y técnicas de RI?
 
-### Alcance
-- Clasificación multiclase de imágenes de documentos (4-5 categorías)
+### Alcance actualizado
+- Clasificación multiclase de imágenes de documentos usando 14 categorías disponibles de RVL-CDIP
 - Extracción de texto con OCR + indexación con TF-IDF
 - Búsqueda textual sobre el contenido extraído
 - Comparación de enfoque visual vs textual vs combinado
@@ -56,7 +56,7 @@ En instituciones educativas, empresas y gobierno se manejan grandes volúmenes d
 ├─────────────────────────────────────────────────────┤
 │                                                     │
 │  1. RECOLECCIÓN DE DATOS                            │
-│     └─ Imágenes de documentos (4-5 categorías)      │
+│     └─ Imágenes de documentos (14 categorías)       │
 │                                                     │
 │  2. RAMA VISUAL (Clasificación por imagen)          │
 │     ├─ Preprocesamiento de imagen                   │
@@ -94,16 +94,18 @@ En instituciones educativas, empresas y gobierno se manejan grandes volúmenes d
 
 ### Opción A: Dataset público
 **RVL-CDIP** (subconjunto) — https://huggingface.co/datasets/aharley/rvl_cdip
-- 16 categorías de documentos (usar solo 4-5)
-- Miles de imágenes etiquetadas
-- Categorías sugeridas: `letter`, `form`, `invoice`, `resume`, `memo`
+- Dataset original con 16 categorías de documentos.
+- En este proyecto se usan 14 categorías descargadas con datos suficientes.
+- Se excluyen `memo` y `resume` por descarga incompleta.
+- Categorías usadas: `advertisement`, `budget`, `email`, `file_folder`, `form`, `handwritten`, `invoice`, `letter`, `news_article`, `presentation`, `questionnaire`, `scientific_publication`, `scientific_report`, `specification`.
 
 ### Opción A simplificada para prototipo
 Para arrancar sin descargar el RVL-CDIP completo, se puede usar el dataset filtrado:
 https://huggingface.co/datasets/sabaridsnfuji/rvl-cdip-filtered
 
-En este repositorio se creó una muestra local en `dataset_simple/` con 4 clases:
-`letter`, `form`, `email`, `resume`.
+En este repositorio se uso un subconjunto local de RVL-CDIP con 14 clases
+disponibles y suficientes para entrenar/evaluar. Las carpetas incompletas se
+excluyen del alcance final.
 
 La muestra se puede regenerar o ampliar con:
 

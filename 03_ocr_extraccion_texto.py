@@ -63,23 +63,14 @@ from nltk.stem.snowball import SnowballStemmer
 # Ruta de Tesseract OCR en este sistema Windows
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-# Las 16 clases del dataset RVL-CDIP
+# Clases del proyecto RVL-CDIP reducido a 14 categorias descargadas.
 import os
 from pathlib import Path
 
-# Cargar clases dinámicamente de lo que se haya logrado descargar (ej. 14 de 16)
-_dataset_path = Path("dataset")
-if _dataset_path.exists():
-    _clases_encontradas = sorted([d.name for d in _dataset_path.iterdir() if d.is_dir()])
-    if _clases_encontradas:
-        CLASES = _clases_encontradas
-        CLASSES = _clases_encontradas
-    else:
-        CLASES = ["letter", "form", "email", "handwritten", "advertisement", "scientific_report", "scientific_publication", "specification", "file_folder", "news_article", "budget", "invoice", "presentation", "questionnaire", "resume", "memo"]
-        CLASSES = CLASES
-else:
-    CLASES = ["letter", "form", "email", "handwritten", "advertisement", "scientific_report", "scientific_publication", "specification", "file_folder", "news_article", "budget", "invoice", "presentation", "questionnaire", "resume", "memo"]
-    CLASSES = CLASES
+from project_config import classes_with_files
+
+CLASES = classes_with_files("dataset")
+CLASSES = CLASES
 
 # Stopwords y stemmer (se inicializan una sola vez)
 STOPWORDS_EN = set(stopwords.words('english'))

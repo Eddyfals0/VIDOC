@@ -41,19 +41,10 @@ import numpy as np
 import os
 from pathlib import Path
 
-# Cargar clases dinámicamente de lo que se haya logrado descargar (ej. 14 de 16)
-_dataset_path = Path("dataset")
-if _dataset_path.exists():
-    _clases_encontradas = sorted([d.name for d in _dataset_path.iterdir() if d.is_dir()])
-    if _clases_encontradas:
-        CLASES = _clases_encontradas
-        CLASSES = _clases_encontradas
-    else:
-        CLASES = ["letter", "form", "email", "handwritten", "advertisement", "scientific_report", "scientific_publication", "specification", "file_folder", "news_article", "budget", "invoice", "presentation", "questionnaire", "resume", "memo"]
-        CLASSES = CLASES
-else:
-    CLASES = ["letter", "form", "email", "handwritten", "advertisement", "scientific_report", "scientific_publication", "specification", "file_folder", "news_article", "budget", "invoice", "presentation", "questionnaire", "resume", "memo"]
-    CLASSES = CLASES
+from project_config import DEFAULT_CLASSES_14
+
+CLASES = DEFAULT_CLASSES_14
+CLASSES = CLASES
 
 
 # ──────────────────────────────────────────────────────────
@@ -266,9 +257,14 @@ def main():
     labels = cargar_features(
         os.path.join(args.features_dir, "labels.npy"), "Labels"
     )
+    ruta_class_names = os.path.join(args.features_dir, "class_names.npy")
+    if os.path.exists(ruta_class_names):
+        nombres_clases = list(np.load(ruta_class_names, allow_pickle=True))
+    else:
+        nombres_clases = CLASES
 
     # Intentar cargar features de histograma (opcional para modelo combinado)
-    ruta_hist = os.path.join(args.features_dir, "features_histogram.npy")
+    ruta_hist = os.path.join(args.features_dir, "features_histograms.npy")
     features_hist = None
     if os.path.exists(ruta_hist):
         features_hist = cargar_features(ruta_hist, "Histograma")
@@ -278,7 +274,6 @@ def main():
     # ── Codificar etiquetas numéricamente ──
     # Los labels ya vienen como enteros desde el script 02.
     y_encoded = labels.astype(int)
-    nombres_clases = CLASES
     # Filtrar solo clases presentes en los datos
     clases_presentes = sorted(set(y_encoded))
     nombres_presentes = [nombres_clases[i] for i in clases_presentes]

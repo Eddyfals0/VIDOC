@@ -2,6 +2,8 @@
 
 Proyecto final de Recuperación de Información basado en la **Idea 6: Clasificador de Imágenes de Documentos (OCR + RI)**.
 
+El alcance final se replanteo a **14 clases de RVL-CDIP** porque solo esas categorias quedaron disponibles con datos suficientes. Las clases incompletas `memo` y `resume` se excluyen automaticamente del pipeline.
+
 El objetivo es trabajar con imágenes de documentos escaneados para:
 
 - clasificar documentos por tipo con enfoques visuales y textuales,
@@ -21,6 +23,8 @@ Archivos y carpetas principales:
 - `resultados/`: gráficas, reportes y evidencias generadas por los modelos.
 - `modelos/`: modelos entrenados en formato serializado.
 - `features/`: representaciones generadas para visualización, OCR y fusión.
+- `project_config.py`: configuracion compartida con las 14 clases validas.
+- `PROYECTO_14_CLASES_EXPLICACION.md`: explicacion programa por programa y relacion con la problematica de la Idea 6.
 
 ## Cómo funciona el proyecto
 
@@ -88,15 +92,24 @@ Los modelos entrenados quedan en `modelos/` y las matrices/características inte
 
 ## Estructura esperada de datos
 
-El proyecto trabaja con documentos organizados por clase, por ejemplo:
+El proyecto trabaja con documentos organizados por clase. En esta version final se usan 14 clases:
 
 ```text
 dataset/
-├── letter/
-├── form/
+├── advertisement/
+├── budget/
 ├── email/
+├── file_folder/
+├── form/
 ├── handwritten/
-└── ...
+├── invoice/
+├── letter/
+├── news_article/
+├── presentation/
+├── questionnaire/
+├── scientific_publication/
+├── scientific_report/
+└── specification/
 ```
 
 También se usan carpetas derivadas durante el proceso, como `dataset_preprocessed/`, `dataset_text/` y `dataset_text_raw/`, pero esas carpetas se consideran salidas intermedias y no deberían subirse al repositorio.

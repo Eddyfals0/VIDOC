@@ -29,17 +29,9 @@ from collections import Counter
 import os
 from pathlib import Path
 
-# Cargar clases dinámicamente de lo que se haya logrado descargar (ej. 14 de 16)
-_dataset_path = Path("dataset")
-if _dataset_path.exists():
-    CLASSES = sorted([d.name for d in _dataset_path.iterdir() if d.is_dir()])
-else:
-    CLASSES = [
-        "letter", "form", "email", "handwritten", "advertisement",
-        "scientific_report", "scientific_publication", "specification",
-        "file_folder", "news_article", "budget", "invoice",
-        "presentation", "questionnaire", "resume", "memo"
-    ]
+from project_config import DEFAULT_CLASSES_14
+
+CLASSES = DEFAULT_CLASSES_14
 
 
 def cargar_documentos(dataset_text_dir):
@@ -269,7 +261,7 @@ def ejecutar_queries_ejemplo(vectorizer, tfidf_matrix, documentos, rutas, clases
         "invoice payment total amount",
         "dear sir letter regarding",
         "meeting agenda schedule",
-        "resume education experience skills",
+        "scientific report research results",
         "budget financial report expenses",
         "email subject from to",
         "scientific research method results",

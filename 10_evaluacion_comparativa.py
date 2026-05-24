@@ -33,17 +33,9 @@ import seaborn as sns
 import os
 from pathlib import Path
 
-# Cargar clases dinámicamente de lo que se haya logrado descargar (ej. 14 de 16)
-_dataset_path = Path("dataset")
-if _dataset_path.exists():
-    CLASSES = sorted([d.name for d in _dataset_path.iterdir() if d.is_dir()])
-else:
-    CLASSES = [
-        "letter", "form", "email", "handwritten", "advertisement",
-        "scientific_report", "scientific_publication", "specification",
-        "file_folder", "news_article", "budget", "invoice",
-        "presentation", "questionnaire", "resume", "memo"
-    ]
+from project_config import DEFAULT_CLASSES_14
+
+CLASSES = DEFAULT_CLASSES_14
 
 # Colores para gráficas
 COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
@@ -229,8 +221,7 @@ def cargar_resultados_desde_archivos(resultados_dir):
                 }
                 if cm:
                     modelos["Fusión (LBP + TF-IDF) + SVM"]["confusion_matrix"] = cm
-                    # Las clases de la fusión son las 14 clases visuales (sin scientific_report y specification)
-                    modelos["Fusión (LBP + TF-IDF) + SVM"]["classes"] = [c for c in CLASSES if c not in ["scientific_report", "specification"]]
+                    modelos["Fusión (LBP + TF-IDF) + SVM"]["classes"] = CLASSES
                 print(f"  [OK] Parseado modelo de Fusión de {file_08.name}")
         except Exception as e:
             print(f"  [!] Error al parsear {file_08.name}: {e}")

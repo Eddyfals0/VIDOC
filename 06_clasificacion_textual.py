@@ -164,7 +164,7 @@ def entrenar_y_evaluar_pipeline(pipeline, nombre_modelo, nombre_archivo,
     # Entrenar el pipeline completo (TF-IDF + clasificador)
     print("   Entrenando pipeline...")
     pipeline.fit(X_train, y_train)
-    print("  ✓ Entrenamiento completado")
+    print("  [OK] Entrenamiento completado")
 
     # Predicciones
     y_pred = pipeline.predict(X_test)

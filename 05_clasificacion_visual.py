@@ -58,7 +58,7 @@ def cargar_features(ruta: str, nombre: str) -> np.ndarray:
         print(f"[ERROR] No se encontró el archivo: {path}")
         sys.exit(1)
     datos = np.load(str(path))
-    print(f"  ✓ {nombre}: {datos.shape}")
+    print(f"  [OK] {nombre}: {datos.shape}")
     return datos
 
 
@@ -126,7 +126,7 @@ def entrenar_y_evaluar(modelo, nombre_modelo, X_train, X_test, y_train, y_test,
     # Entrenar el modelo
     print("   Entrenando...")
     modelo.fit(X_train, y_train)
-    print("  ✓ Entrenamiento completado")
+    print("  [OK] Entrenamiento completado")
 
     # Predicciones en conjunto de prueba
     y_pred = modelo.predict(X_test)

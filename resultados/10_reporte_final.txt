@@ -10,20 +10,20 @@ Pipeline: Visual (LBP/GLCM + SVM/KNN) vs Textual (OCR + TF-IDF + SVM)
 --------------------------------------------------------------------------------
 Modelo                         Tipo           Accuracy  Precision     Recall         F1
 --------------------------------------------------------------------------------
-TF-IDF + LogReg                textual          0.6541     0.6600     0.6400     0.6400
-TF-IDF + LinearSVC             textual          0.6269     0.6200     0.6200     0.6200
+Fusión (LBP + TF-IDF) + SVM    fusion           0.7970     0.8000     0.8000     0.8000
+TF-IDF + LogReg                textual          0.7767     0.7800     0.7800     0.7700
+TF-IDF + LinearSVC             textual          0.7656     0.7600     0.7600     0.7600
+TF-IDF + NaiveBayes            textual          0.6789     0.7100     0.6600     0.6500
 Combinado Visual (LBP+GLCM+Hist) + SVM visual           0.6236     0.6200     0.6200     0.6200
-TF-IDF + NaiveBayes            textual          0.5941     0.6000     0.5700     0.5700
 CNN                            deep_learning     0.5904     0.6000     0.5900     0.5900
 GLCM + SVM                     visual           0.5729     0.5800     0.5700     0.5700
-Fusión (LBP + TF-IDF) + SVM    fusion           0.5512     0.5500     0.5500     0.5500
 LBP + SVM                      visual           0.5446     0.5400     0.5400     0.5400
 LBP + KNN                      visual           0.4386     0.4400     0.4400     0.4300
 --------------------------------------------------------------------------------
 
-MEJOR MODELO: TF-IDF + LogReg
-  Accuracy: 0.6541
-  Tipo: textual
+MEJOR MODELO: Fusión (LBP + TF-IDF) + SVM
+  Accuracy: 0.7970
+  Tipo: fusion
 
 
 ================================================================================
@@ -33,47 +33,230 @@ MEJOR MODELO: TF-IDF + LogReg
 ------------------------------------------------------------
   LBP + SVM (visual)
 ------------------------------------------------------------
+precision    recall  f1-score   support
+
+         advertisement       0.61      0.66      0.63       200
+                budget       0.45      0.42      0.44       200
+                 email       0.72      0.83      0.77       200
+           file_folder       0.66      0.75      0.70       200
+                  form       0.40      0.39      0.39       200
+           handwritten       0.73      0.80      0.76       200
+               invoice       0.37      0.40      0.38       200
+                letter       0.38      0.35      0.37       200
+                  memo       0.30      0.35      0.32       200
+          news_article       0.63      0.60      0.62       200
+          presentation       0.49      0.40      0.44       200
+         questionnaire       0.41      0.34      0.37       200
+                resume       0.66      0.61      0.64       200
+scientific_publication       0.80      0.70      0.75       200
+
+              accuracy                           0.54      2800
+             macro avg       0.54      0.54      0.54      2800
+          weighted avg       0.54      0.54      0.54      2800
 
 ------------------------------------------------------------
   LBP + KNN (visual)
 ------------------------------------------------------------
+precision    recall  f1-score   support
+
+         advertisement       0.49      0.65      0.56       200
+                budget       0.32      0.41      0.36       200
+                 email       0.64      0.81      0.71       200
+           file_folder       0.62      0.62      0.62       200
+                  form       0.26      0.28      0.27       200
+           handwritten       0.62      0.65      0.63       200
+               invoice       0.26      0.28      0.27       200
+                letter       0.24      0.26      0.25       200
+                  memo       0.24      0.23      0.23       200
+          news_article       0.43      0.43      0.43       200
+          presentation       0.45      0.21      0.29       200
+         questionnaire       0.43      0.30      0.36       200
+                resume       0.52      0.47      0.50       200
+scientific_publication       0.68      0.54      0.60       200
+
+              accuracy                           0.44      2800
+             macro avg       0.44      0.44      0.43      2800
+          weighted avg       0.44      0.44      0.43      2800
 
 ------------------------------------------------------------
   GLCM + SVM (visual)
 ------------------------------------------------------------
+precision    recall  f1-score   support
+
+         advertisement       0.56      0.77      0.65       200
+                budget       0.47      0.49      0.48       200
+                 email       0.75      0.73      0.74       200
+           file_folder       0.74      0.84      0.79       200
+                  form       0.45      0.40      0.43       200
+           handwritten       0.75      0.72      0.73       200
+               invoice       0.45      0.40      0.43       200
+                letter       0.38      0.37      0.38       200
+                  memo       0.34      0.43      0.38       200
+          news_article       0.72      0.62      0.66       200
+          presentation       0.56      0.47      0.51       200
+         questionnaire       0.51      0.41      0.46       200
+                resume       0.61      0.65      0.63       200
+scientific_publication       0.75      0.71      0.73       200
+
+              accuracy                           0.57      2800
+             macro avg       0.58      0.57      0.57      2800
+          weighted avg       0.58      0.57      0.57      2800
 
 ------------------------------------------------------------
   Combinado Visual (LBP+GLCM+Hist) + SVM (visual)
 ------------------------------------------------------------
+precision    recall  f1-score   support
+
+         advertisement       0.69      0.78      0.73       200
+                budget       0.54      0.51      0.52       200
+                 email       0.83      0.86      0.85       200
+           file_folder       0.79      0.86      0.83       200
+                  form       0.47      0.46      0.46       200
+           handwritten       0.80      0.84      0.82       200
+               invoice       0.49      0.51      0.50       200
+                letter       0.41      0.39      0.40       200
+                  memo       0.37      0.42      0.39       200
+          news_article       0.76      0.67      0.71       200
+          presentation       0.60      0.56      0.58       200
+         questionnaire       0.50      0.47      0.48       200
+                resume       0.70      0.69      0.69       200
+scientific_publication       0.78      0.73      0.76       200
+
+              accuracy                           0.62      2800
+             macro avg       0.62      0.62      0.62      2800
+          weighted avg       0.62      0.62      0.62      2800
 
 ------------------------------------------------------------
   TF-IDF + LinearSVC (textual)
 ------------------------------------------------------------
+precision    recall  f1-score   support
+
+         advertisement       0.74      0.73      0.74       199
+                budget       0.58      0.53      0.55       195
+                 email       0.91      0.88      0.90       200
+           file_folder       0.81      0.83      0.82       199
+                  form       0.71      0.72      0.71       197
+           handwritten       0.59      0.73      0.65       128
+               invoice       0.87      0.78      0.82       197
+                letter       0.68      0.72      0.70       195
+          news_article       0.72      0.78      0.75       199
+          presentation       0.96      0.96      0.96       199
+         questionnaire       0.86      0.90      0.88       197
+scientific_publication       0.76      0.78      0.77       199
+     scientific_report       0.71      0.65      0.68       198
+         specification       0.78      0.69      0.73       198
+
+              accuracy                           0.77      2700
+             macro avg       0.76      0.76      0.76      2700
+          weighted avg       0.77      0.77      0.77      2700
 
 ------------------------------------------------------------
   TF-IDF + LogReg (textual)
 ------------------------------------------------------------
+precision    recall  f1-score   support
+
+         advertisement       0.77      0.75      0.76       199
+                budget       0.58      0.55      0.56       195
+                 email       0.96      0.86      0.91       200
+           file_folder       0.83      0.81      0.82       199
+                  form       0.68      0.77      0.72       197
+           handwritten       0.57      0.73      0.64       128
+               invoice       0.93      0.76      0.84       197
+                letter       0.74      0.70      0.72       195
+          news_article       0.74      0.79      0.76       199
+          presentation       0.97      0.96      0.97       199
+         questionnaire       0.86      0.90      0.88       197
+scientific_publication       0.80      0.77      0.78       199
+     scientific_report       0.69      0.78      0.73       198
+         specification       0.80      0.71      0.75       198
+
+              accuracy                           0.78      2700
+             macro avg       0.78      0.78      0.77      2700
+          weighted avg       0.78      0.78      0.78      2700
 
 ------------------------------------------------------------
   TF-IDF + NaiveBayes (textual)
 ------------------------------------------------------------
+precision    recall  f1-score   support
+
+         advertisement       0.71      0.66      0.68       199
+                budget       0.65      0.32      0.43       195
+                 email       0.70      0.86      0.78       200
+           file_folder       0.51      0.72      0.60       199
+                  form       0.52      0.70      0.60       197
+           handwritten       1.00      0.04      0.08       128
+               invoice       0.81      0.75      0.78       197
+                letter       0.79      0.65      0.71       195
+          news_article       0.57      0.73      0.64       199
+          presentation       0.93      0.91      0.92       199
+         questionnaire       0.77      0.89      0.83       197
+scientific_publication       0.71      0.75      0.73       199
+     scientific_report       0.68      0.68      0.68       198
+         specification       0.61      0.61      0.61       198
+
+              accuracy                           0.68      2700
+             macro avg       0.71      0.66      0.65      2700
+          weighted avg       0.70      0.68      0.66      2700
 
 ------------------------------------------------------------
   CNN (deep_learning)
 ------------------------------------------------------------
+precision    recall  f1-score   support
+
+         advertisement       0.32      0.42      0.36       200
+                budget       0.53      0.52      0.52       200
+                 email       0.92      0.86      0.89       200
+           file_folder       0.55      0.47      0.51       200
+                  form       0.57      0.48      0.52       200
+           handwritten       0.70      0.83      0.76       200
+               invoice       0.44      0.43      0.44       200
+                letter       0.64      0.75      0.69       200
+          news_article       0.54      0.49      0.52       200
+          presentation       0.68      0.65      0.66       200
+         questionnaire       0.68      0.70      0.69       200
+scientific_publication       0.57      0.42      0.48       200
+     scientific_report       0.78      0.63      0.70       200
+         specification       0.48      0.60      0.53       200
+
+              accuracy                           0.59      2800
+             macro avg       0.60      0.59      0.59      2800
+          weighted avg       0.60      0.59      0.59      2800
+
+
+  Modelo guardado: modelos\cnn_model.keras
 
 ------------------------------------------------------------
   Fusión (LBP + TF-IDF) + SVM (fusion)
 ------------------------------------------------------------
+precision    recall  f1-score   support
+
+         advertisement       0.79      0.75      0.77       200
+                budget       0.62      0.57      0.59       199
+                 email       0.92      0.88      0.90       200
+           file_folder       0.83      0.78      0.80       199
+                  form       0.79      0.76      0.77       200
+           handwritten       0.62      0.95      0.75       167
+               invoice       0.89      0.78      0.83       200
+                letter       0.75      0.77      0.76       198
+          news_article       0.83      0.76      0.79       200
+          presentation       0.98      0.95      0.97       200
+         questionnaire       0.89      0.88      0.88       198
+scientific_publication       0.78      0.81      0.80       200
+     scientific_report       0.76      0.84      0.80       199
+         specification       0.78      0.70      0.74       199
+
+              accuracy                           0.80      2759
+             macro avg       0.80      0.80      0.80      2759
+          weighted avg       0.80      0.80      0.80      2759
 
 ================================================================================
   CONCLUSIONES
 ================================================================================
 
   Mejor modelo visual: Combinado Visual (LBP+GLCM+Hist) + SVM (Accuracy: 0.6236)
-  Mejor modelo textual: TF-IDF + LogReg (Accuracy: 0.6541)
+  Mejor modelo textual: TF-IDF + LogReg (Accuracy: 0.7767)
   Mejor modelo deep_learning: CNN (Accuracy: 0.5904)
-  Mejor modelo fusion: Fusión (LBP + TF-IDF) + SVM (Accuracy: 0.5512)
+  Mejor modelo fusion: Fusión (LBP + TF-IDF) + SVM (Accuracy: 0.7970)
 
   El pipeline dual (visual + textual) permite comparar las fortalezas
   de cada enfoque para la clasificación de documentos escaneados.

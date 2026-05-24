@@ -14,12 +14,12 @@
       "handwritten",
       "invoice",
       "letter",
-      "memo",
       "news_article",
       "presentation",
       "questionnaire",
-      "resume",
-      "scientific_publication"
+      "scientific_publication",
+      "scientific_report",
+      "specification"
     ]
   },
   "LBP + KNN": {
@@ -37,12 +37,12 @@
       "handwritten",
       "invoice",
       "letter",
-      "memo",
       "news_article",
       "presentation",
       "questionnaire",
-      "resume",
-      "scientific_publication"
+      "scientific_publication",
+      "scientific_report",
+      "specification"
     ]
   },
   "GLCM + SVM": {
@@ -60,12 +60,12 @@
       "handwritten",
       "invoice",
       "letter",
-      "memo",
       "news_article",
       "presentation",
       "questionnaire",
-      "resume",
-      "scientific_publication"
+      "scientific_publication",
+      "scientific_report",
+      "specification"
     ]
   },
   "Combinado Visual (LBP+GLCM+Hist) + SVM": {
@@ -76,24 +76,24 @@
     "tipo": "visual"
   },
   "TF-IDF + LinearSVC": {
-    "accuracy": 0.6269,
-    "precision": 0.62,
-    "recall": 0.62,
-    "f1": 0.62,
+    "accuracy": 0.7656,
+    "precision": 0.76,
+    "recall": 0.76,
+    "f1": 0.76,
     "tipo": "textual"
   },
   "TF-IDF + LogReg": {
-    "accuracy": 0.6541,
-    "precision": 0.66,
-    "recall": 0.64,
-    "f1": 0.64,
+    "accuracy": 0.7767,
+    "precision": 0.78,
+    "recall": 0.78,
+    "f1": 0.77,
     "tipo": "textual"
   },
   "TF-IDF + NaiveBayes": {
-    "accuracy": 0.5941,
-    "precision": 0.6,
-    "recall": 0.57,
-    "f1": 0.57,
+    "accuracy": 0.6789,
+    "precision": 0.71,
+    "recall": 0.66,
+    "f1": 0.65,
     "tipo": "textual"
   },
   "CNN": {
@@ -104,10 +104,10 @@
     "tipo": "deep_learning"
   },
   "Fusi\u00f3n (LBP + TF-IDF) + SVM": {
-    "accuracy": 0.5512,
-    "precision": 0.55,
-    "recall": 0.55,
-    "f1": 0.55,
+    "accuracy": 0.797,
+    "precision": 0.8,
+    "recall": 0.8,
+    "f1": 0.8,
     "tipo": "fusion",
     "classes": [
       "advertisement",
@@ -118,12 +118,12 @@
       "handwritten",
       "invoice",
       "letter",
-      "memo",
       "news_article",
       "presentation",
       "questionnaire",
-      "resume",
-      "scientific_publication"
+      "scientific_publication",
+      "scientific_report",
+      "specification"
     ]
   }
 }

@@ -2,37 +2,37 @@
   ESTADÍSTICAS DE EXTRACCIÓN OCR CON PADDLEOCR
 ======================================================================
 
-Fecha de ejecución:     2026-05-24 01:32:19
-Tiempo total:           15.4 segundos (0.3 min)
+Fecha de ejecución:     2026-05-24 12:06:03
+Tiempo total:           8637.4 segundos (144.0 min)
 Workers utilizados:     2
-Velocidad promedio:     0.91 imágenes/segundo
+Velocidad promedio:     1.62 imágenes/segundo
 
 ----------------------------------------------------------------------
   RESUMEN GENERAL
 ----------------------------------------------------------------------
-Total de imágenes:      14
-Extracciones exitosas:  14 (100.0%)
-Extracciones fallidas:  0
+Total de imágenes:      14000
+Extracciones exitosas:  13987 (99.9%)
+Extracciones fallidas:  13
 
 ----------------------------------------------------------------------
   ESTADÍSTICAS POR CLASE
 ----------------------------------------------------------------------
 Clase                           Total  Éxito       %   Prom.Raw  Prom.Proc
 ----------------------------------------------------------------------
-advertisement                       1      1  100.0%      807.0      561.0
-budget                              1      1  100.0%      108.0       72.0
-email                               1      1  100.0%      366.0      221.0
-file_folder                         1      1  100.0%     2335.0     1298.0
-form                                1      1  100.0%      539.0      291.0
-handwritten                         1      1  100.0%       13.0        0.0
-invoice                             1      1  100.0%     2628.0     1147.0
-letter                              1      1  100.0%      151.0      110.0
-news_article                        1      1  100.0%     1846.0     1008.0
-presentation                        1      1  100.0%     4172.0     2815.0
-questionnaire                       1      1  100.0%     4517.0     3024.0
-scientific_publication              1      1  100.0%      608.0      344.0
-scientific_report                   1      1  100.0%      867.0      604.0
-specification                       1      1  100.0%      591.0      368.0
+advertisement                    1000   1000  100.0%      990.1      622.5
+budget                           1000   1000  100.0%      900.6      554.4
+email                            1000   1000  100.0%      772.7      474.3
+file_folder                      1000    998   99.8%     1217.4      744.6
+form                             1000   1000  100.0%      874.5      414.7
+handwritten                      1000    991   99.1%       48.1       24.2
+invoice                          1000   1000  100.0%     1316.7      758.0
+letter                           1000   1000  100.0%      673.1      434.7
+news_article                     1000   1000  100.0%     2813.2     1775.4
+presentation                     1000   1000  100.0%     2359.9     1596.6
+questionnaire                    1000    999   99.9%     4086.5     2591.9
+scientific_publication           1000   1000  100.0%      794.1      488.8
+scientific_report                1000   1000  100.0%      504.4      323.8
+specification                    1000    999   99.9%     1230.0      759.7
 ----------------------------------------------------------------------
-TOTAL                              14     14  100.0%
+TOTAL                           14000  13987   99.9%
 ======================================================================

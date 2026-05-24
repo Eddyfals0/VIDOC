@@ -369,7 +369,7 @@ def main():
                                 args.dataset_dir, args.output_dir)
     
     print("\n" + "=" * 70)
-    print("  ✓ Motor de búsqueda completado")
+    print("  [OK] Motor de búsqueda completado")
     print("=" * 70)
 
 

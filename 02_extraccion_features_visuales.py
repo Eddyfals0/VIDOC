@@ -30,7 +30,7 @@ Descripción:
 Uso:
     python 02_extraccion_features_visuales.py --input dataset_preprocessed/256x256 --output features
 
-Autor: Estudiante RI
+Autor: Eduardo Guerra Bedolla
 Fecha: Mayo 2026
 ==============================================================================
 """

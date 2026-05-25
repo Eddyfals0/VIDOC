@@ -11,7 +11,11 @@ CONFIGURACIÓN DEL MODELO
   Batch size: 32
   Optimizer: Adam
   Loss: sparse_categorical_crossentropy
-  Dropout: 0.3
+  Dropout: 0.5 (capa Dense)
+  Regularización: L2=0.001 (Dense)
+  BatchNormalization: no (incompatible con restore_best_weights)
+  Data Augmentation: no
+  Early Stopping: patience=4 (monitor=val_loss)
 
 DISTRIBUCIÓN DEL DATASET
 ----------------------------------------
@@ -36,52 +40,51 @@ DISTRIBUCIÓN DEL DATASET
 
 RESULTADOS EN TEST
 ----------------------------------------
-  Accuracy en test: 0.5904
+  Accuracy en test: 0.5732
 
 HISTORIAL DE ENTRENAMIENTO
 ------------------------------------------------------------
   Época    Train Acc    Val Acc      Train Loss   Val Loss    
   --------------------------------------------------------
-  1        0.2098       0.3433       2.4158       2.0698      
-  2        0.3652       0.4812       1.9897       1.7072      
-  3        0.4535       0.5295       1.7135       1.5841      
-  4        0.5252       0.5545       1.4832       1.4588      
-  5        0.5931       0.5562       1.2620       1.4960      
-  6        0.6397       0.5746       1.1132       1.4293      
-  7        0.6923       0.5496       0.9211       1.6758      
-  8        0.7390       0.5862       0.7796       1.6769      
-  9        0.7785       0.5920       0.6637       1.7861      
-  10       0.8138       0.5924       0.5495       1.8747      
-  11       0.8367       0.5862       0.4836       1.9748      
-  12       0.8583       0.6076       0.4176       1.9872      
-  13       0.8813       0.5911       0.3508       2.1777      
-  14       0.9023       0.5955       0.2928       2.1442      
-  15       0.9107       0.5991       0.2587       2.3099      
+  1        0.1404       0.1915       2.5893       2.4813      
+  2        0.2281       0.3299       2.4429       2.2625      
+  3        0.3033       0.4080       2.2459       2.0468      
+  4        0.3502       0.4647       2.1220       1.8984      
+  5        0.4076       0.5116       1.9902       1.7718      
+  6        0.4298       0.5071       1.9170       1.7638      
+  7        0.4616       0.5371       1.8592       1.7009      
+  8        0.4802       0.5545       1.7907       1.6819      
+  9        0.5028       0.5446       1.7439       1.7186      
+  10       0.5182       0.5768       1.6973       1.6420      
+  11       0.5407       0.5491       1.6307       1.7676      
+  12       0.5579       0.5621       1.5860       1.7350      
+  13       0.5773       0.5656       1.5403       1.7895      
+  14       0.5877       0.5902       1.5066       1.6928      
 
-  Mejor val_accuracy: 0.6076 (época 12)
+  Mejor val_accuracy: 0.5902 (época 14)
 
 REPORTE DE CLASIFICACIÓN
 ======================================================================
                         precision    recall  f1-score   support
 
-         advertisement       0.32      0.42      0.36       200
-                budget       0.53      0.52      0.52       200
-                 email       0.92      0.86      0.89       200
-           file_folder       0.55      0.47      0.51       200
-                  form       0.57      0.48      0.52       200
-           handwritten       0.70      0.83      0.76       200
-               invoice       0.44      0.43      0.44       200
-                letter       0.64      0.75      0.69       200
-          news_article       0.54      0.49      0.52       200
-          presentation       0.68      0.65      0.66       200
-         questionnaire       0.68      0.70      0.69       200
-scientific_publication       0.57      0.42      0.48       200
-     scientific_report       0.78      0.63      0.70       200
-         specification       0.48      0.60      0.53       200
+         advertisement       0.38      0.32      0.35       200
+                budget       0.45      0.47      0.46       200
+                 email       0.86      0.91      0.88       200
+           file_folder       0.53      0.32      0.39       200
+                  form       0.44      0.55      0.49       200
+           handwritten       0.77      0.80      0.78       200
+               invoice       0.45      0.37      0.40       200
+                letter       0.65      0.72      0.69       200
+          news_article       0.54      0.47      0.50       200
+          presentation       0.87      0.64      0.73       200
+         questionnaire       0.55      0.71      0.62       200
+scientific_publication       0.50      0.41      0.45       200
+     scientific_report       0.64      0.66      0.65       200
+         specification       0.47      0.68      0.55       200
 
-              accuracy                           0.59      2800
-             macro avg       0.60      0.59      0.59      2800
-          weighted avg       0.60      0.59      0.59      2800
+              accuracy                           0.57      2800
+             macro avg       0.58      0.57      0.57      2800
+          weighted avg       0.58      0.57      0.57      2800
 
 
   Modelo guardado: modelos\cnn_model.keras

@@ -156,27 +156,35 @@ def cargar_imagenes(directorio_base: str):
 
 def construir_modelo_cnn(num_clases: int):
     """
-    Construye la arquitectura CNN definida en la Idea 6 del proyecto.
+    Construye la arquitectura CNN con técnicas anti-sobreajuste.
 
-    Arquitectura:
+    Arquitectura (idéntica a la original + regularización):
         Conv2D(32, 3x3, ReLU) → MaxPool(2x2)
         Conv2D(64, 3x3, ReLU) → MaxPool(2x2)
         Conv2D(64, 3x3, ReLU)
-        Flatten → Dense(64, ReLU) → Dropout(0.3)
+        Flatten → Dense(64, ReLU, L2=0.001) → Dropout(0.5)
         Dense(num_clases, softmax)
+
+    Técnicas aplicadas:
+        - Dropout(0.5) en la capa densa: subido de 0.3 a 0.5 para más regularización
+        - L2(0.001) en Dense: penaliza pesos grandes para evitar memorización
+        NOTA: BatchNorm eliminado — es incompatible con restore_best_weights
+              (las running statistics no se restauran junto con los pesos).
     """
     import tensorflow as tf
-    from tensorflow.keras import Sequential, layers
+    from tensorflow.keras import Sequential, layers, regularizers
 
     model = Sequential([
-        layers.Conv2D(32, (3, 3), activation="relu", input_shape=(IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS)),
+        layers.Conv2D(32, (3, 3), activation="relu",
+                      input_shape=(IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS)),
         layers.MaxPooling2D((2, 2)),
         layers.Conv2D(64, (3, 3), activation="relu"),
         layers.MaxPooling2D((2, 2)),
         layers.Conv2D(64, (3, 3), activation="relu"),
         layers.Flatten(),
-        layers.Dense(64, activation="relu"),
-        layers.Dropout(0.3),
+        layers.Dense(64, activation="relu",
+                     kernel_regularizer=regularizers.l2(0.001)),
+        layers.Dropout(0.5),
         layers.Dense(num_clases, activation="softmax"),
     ])
 
@@ -283,7 +291,11 @@ def guardar_resumen(accuracy_test, reporte, historial, ruta_modelo, ruta_salida,
         f.write(f"  Batch size: {batch_size}\n")
         f.write(f"  Optimizer: Adam\n")
         f.write(f"  Loss: sparse_categorical_crossentropy\n")
-        f.write(f"  Dropout: 0.3\n\n")
+        f.write(f"  Dropout: 0.5 (capa Dense)\n")
+        f.write(f"  Regularización: L2=0.001 (Dense)\n")
+        f.write(f"  BatchNormalization: no (incompatible con restore_best_weights)\n")
+        f.write(f"  Data Augmentation: no\n")
+        f.write(f"  Early Stopping: patience=4 (monitor=val_loss)\n\n")
 
         # Distribución del dataset
         f.write("DISTRIBUCIÓN DEL DATASET\n")
@@ -451,13 +463,37 @@ def main():
     modelo = construir_modelo_cnn(num_clases)
     modelo.summary()
 
+    # ── Callbacks anti-sobreajuste ──
+    print("\n Configurando callbacks anti-sobreajuste...")
+    from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+
+    ruta_mejor_modelo = os.path.join(args.modelos_dir, "cnn_best.keras")
+    callbacks_lista = [
+        EarlyStopping(
+            monitor="val_loss",
+            patience=4,
+            restore_best_weights=True,
+            verbose=1,
+        ),
+        ModelCheckpoint(
+            ruta_mejor_modelo,
+            monitor="val_accuracy",
+            save_best_only=True,
+            verbose=0,
+        ),
+    ]
+    print(f"   EarlyStopping  : patience=4, monitor=val_loss")
+    print(f"   ModelCheckpoint: mejor val_accuracy -> {ruta_mejor_modelo}")
+
     # ── Entrenar el modelo ──
-    print(f"\n Iniciando entrenamiento ({args.epochs} épocas, batch={args.batch_size})...")
+    print(f"\n Iniciando entrenamiento (max. {args.epochs} epocas, batch={args.batch_size})...")
+    print("   (Early Stopping detendra si val_loss no mejora en 4 epocas seguidas)")
     historial = modelo.fit(
         X_train, y_train,
         epochs=args.epochs,
         batch_size=args.batch_size,
         validation_split=args.validation_split,
+        callbacks=callbacks_lista,
         verbose=1,
     )
 

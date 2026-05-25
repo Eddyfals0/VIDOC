@@ -19,7 +19,7 @@ Descripción:
 Uso:
     python 01_preprocesamiento_imagenes.py --input dataset --output dataset_preprocessed
 
-Autor: Estudiante RI
+Autor: eduardo guerra bedolla
 Fecha: Mayo 2026
 ==============================================================================
 """
